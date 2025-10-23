@@ -1,0 +1,2 @@
+class UnknownTimePeriodTypeException(Exception):
+  pass

@@ -1,0 +1,962 @@
+married: false   # bool | int (year)
+payment_order:
+  # [Name of account (must match a name in accounts), account_expectations]
+  # Accounts will be deposited to in the order below, up until their expectation amount is met.
+  - [Capital One Checking, 5000]
+  - [Capital One Savings, 10000]
+  - [Fidelity Standard Investment, 50000]
+  # On reserve word "Debt", the figure in [1] will be the interest rate percentage.
+  # Everything greater than or equal to this percentage will be paid when this item addressed.
+  - [Debt, 7]
+  # "null" indicates "deposit here forever"
+  - [Fidelity Standard Investment, null]
+accounts:
+  - name: Capital One Checking
+    type: cash    # cash | savings | investment | roth_ira | hsa | fourk
+    balance: 5000
+    interest_rate: 0
+    interest_period_type: years   # days | weeks | months | years
+    interest_period_value: 0
+    last_interest_date:
+      month: 8
+      day: 21
+      year: 2025
+    pays_capital_gains_tax: False
+    pays_income_tax: False
+  - name: Capital One Savings
+    type: savings    # cash | savings | investment | roth_ira | hsa | fourk
+    balance: 10000
+    interest_rate: 3.5
+    interest_period_type: days   # days | weeks | months | years
+    interest_period_value: 1
+    last_interest_date:
+      month: 8
+      day: 21
+      year: 2025
+    pays_capital_gains_tax: False
+    pays_income_tax: False
+  - name: Fidelity Standard Investment
+    type: investment    # cash | savings | investment | roth_ira | hsa | fourk
+    balance: 20000
+    interest_rate: 8
+    interest_period_type: days   # days | weeks | months | years
+    interest_period_value: 1
+    last_interest_date:
+      month: 8
+      day: 21
+      year: 2025
+    pays_capital_gains_tax: True
+    pays_income_tax: False
+  - name: Company1 401k
+    type: fourk    # cash | savings | investment | roth_ira | hsa | fourk
+    balance: 0
+    interest_rate: 8
+    interest_period_type: days   # days | weeks | months | years
+    interest_period_value: 1
+    last_interest_date:
+      month: 8
+      day: 14
+      year: 2025
+    pays_capital_gains_tax: False
+    pays_income_tax: True
+  - name: Rollover IRA/401k
+    type: fourk    # cash | savings | investment | roth_ira | hsa | fourk
+    balance: 4390
+    interest_rate: 8
+    interest_period_type: days   # days | weeks | months | years
+    interest_period_value: 1
+    last_interest_date:
+      month: 8
+      day: 19
+      year: 2025
+    pays_capital_gains_tax: False
+    pays_income_tax: True
+  - name: Person2 Company2 401k
+    type: fourk    # cash | savings | investment | roth_ira | hsa | fourk
+    balance: 29300
+    interest_rate: 8
+    interest_period_type: days   # days | weeks | months | years
+    interest_period_value: 1
+    last_interest_date:
+      month: 8
+      day: 1
+      year: 2025
+    pays_capital_gains_tax: False
+    pays_income_tax: True
+  - name: Company1 HSA
+    type: hsa    # cash | savings | investment | roth_ira | hsa | fourk
+    balance: 0
+    interest_rate: 8
+    interest_period_type: days   # days | weeks | months | years
+    interest_period_value: 1
+    last_interest_date:
+      month: 8
+      day: 21
+      year: 2025
+    pays_capital_gains_tax: False
+    pays_income_tax: True
+bills:
+  - name: "Rent"
+    charge: 1780
+    charge_period_type: months   # days | weeks | months | years
+    charge_period_value: 1
+    annual_inflation_flat: null
+    annual_inflation_percentage: 3
+    annual_inflation_period_type: years
+    annual_inflation_period_value: 1
+    start_date:
+      month: 8
+      day: 1
+      year: 2025
+    end_date:
+      month: 8
+      day: 9
+      year: 2036
+  - name: "Groceries"
+    charge: 180
+    charge_period_type: weeks   # days | weeks | months | years
+    charge_period_value: 1
+    annual_inflation_flat: null
+    annual_inflation_percentage: 3
+    annual_inflation_period_type: years
+    annual_inflation_period_value: 1
+    start_date:
+      month: 8
+      day: 18
+      year: 2025
+    end_date: null
+  - name: "Electric Bill"
+    charge: 225
+    charge_period_type: months   # days | weeks | months | years
+    charge_period_value: 1
+    annual_inflation_flat: null
+    annual_inflation_percentage: 3
+    annual_inflation_period_type: years
+    annual_inflation_period_value: 1
+    start_date:
+      month: 8
+      day: 15
+      year: 2025
+    end_date: null
+  - name: "Buffer"
+    charge: 100
+    charge_period_type: months   # days | weeks | months | years
+    charge_period_value: 1
+    annual_inflation_flat: 5
+    annual_inflation_percentage: null
+    annual_inflation_period_type: years
+    annual_inflation_period_value: 1
+    start_date:
+      month: 8
+      day: 18
+      year: 2025
+    end_date: null
+  - name: "Person1 Spending Money"
+    charge: 50
+    charge_period_type: weeks   # days | weeks | months | years
+    charge_period_value: 1
+    annual_inflation_flat: 10
+    annual_inflation_percentage: null
+    annual_inflation_period_type: years
+    annual_inflation_period_value: 1
+    start_date:
+      month: 8
+      day: 18
+      year: 2025
+    end_date: null
+  - name: "Person2 Spending Money"
+    charge: 50
+    charge_period_type: weeks   # days | weeks | months | years
+    charge_period_value: 1
+    annual_inflation_flat: 10
+    annual_inflation_percentage: null
+    annual_inflation_period_type: years
+    annual_inflation_period_value: 1
+    start_date:
+      month: 8
+      day: 18
+      year: 2025
+    end_date: null
+  - name: "Car Insurance"
+    charge: 820
+    charge_period_type: months   # days | weeks | months | years
+    charge_period_value: 6
+    annual_inflation_flat: null
+    annual_inflation_percentage: 3
+    annual_inflation_period_type: years
+    annual_inflation_period_value: 1
+    start_date:
+      month: 3
+      day: 10
+      year: 2025
+    end_date: null
+  - name: "Internet"
+    charge: 32
+    charge_period_type: months   # days | weeks | months | years
+    charge_period_value: 1
+    annual_inflation_flat: null
+    annual_inflation_percentage: 3
+    annual_inflation_period_type: years
+    annual_inflation_period_value: 1
+    start_date:
+      month: 8
+      day: 1
+      year: 2025
+    end_date: null
+  - name: "Person2 Phone Bill"
+    charge: 55.48
+    charge_period_type: months   # days | weeks | months | years
+    charge_period_value: 1
+    annual_inflation_flat: null
+    annual_inflation_percentage: 3
+    annual_inflation_period_type: years
+    annual_inflation_period_value: 1
+    start_date:
+      month: 8
+      day: 1
+      year: 2025
+    end_date: null
+  - name: "Gas (car)"
+    charge: 30
+    charge_period_type: weeks   # days | weeks | months | years
+    charge_period_value: 3
+    annual_inflation_flat: null
+    annual_inflation_percentage: 3
+    annual_inflation_period_type: years
+    annual_inflation_period_value: 1
+    start_date:
+      month: 8
+      day: 1
+      year: 2025
+    end_date: null
+  - name: "Business Services (PP Debit Card)"
+    charge: 38.33
+    charge_period_type: months   # days | weeks | months | years
+    charge_period_value: 1
+    annual_inflation_flat: null
+    annual_inflation_percentage: 2
+    annual_inflation_period_type: years
+    annual_inflation_period_value: 1
+    start_date:
+      month: 8
+      day: 1
+      year: 2025
+    end_date: null
+  - name: "Water Bill"
+    charge: 28
+    charge_period_type: months   # days | weeks | months | years
+    charge_period_value: 1
+    annual_inflation_flat: null
+    annual_inflation_percentage: 3
+    annual_inflation_period_type: years
+    annual_inflation_period_value: 1
+    start_date:
+      month: 8
+      day: 1
+      year: 2025
+    end_date: null
+  - name: "Gas Bill"
+    charge: 25
+    charge_period_type: months   # days | weeks | months | years
+    charge_period_value: 1
+    annual_inflation_flat: null
+    annual_inflation_percentage: 3
+    annual_inflation_period_type: years
+    annual_inflation_period_value: 1
+    start_date:
+      month: 8
+      day: 1
+      year: 2025
+    end_date: null
+  - name: "Keeps"
+    charge: 260
+    charge_period_type: years   # days | weeks | months | years
+    charge_period_value: 1
+    annual_inflation_flat: null
+    annual_inflation_percentage: 3
+    annual_inflation_period_type: years
+    annual_inflation_period_value: 1
+    start_date:
+      month: 3
+      day: 1
+      year: 2025
+    end_date: null
+  - name: "Crunchyroll"
+    charge: 11.99
+    charge_period_type: months   # days | weeks | months | years
+    charge_period_value: 1
+    annual_inflation_flat: null
+    annual_inflation_percentage: 3
+    annual_inflation_period_type: years
+    annual_inflation_period_value: 1
+    start_date:
+      month: 8
+      day: 1
+      year: 2025
+    end_date: null
+  - name: "Amazon Prime (Person2)"
+    charge: 140
+    charge_period_type: years   # days | weeks | months | years
+    charge_period_value: 1
+    annual_inflation_flat: null
+    annual_inflation_percentage: 3
+    annual_inflation_period_type: years
+    annual_inflation_period_value: 1
+    start_date:
+      month: 5
+      day: 1
+      year: 2025
+    end_date: null
+  - name: "Renter's Insurance"
+    charge: 125
+    charge_period_type: years   # days | weeks | months | years
+    charge_period_value: 1
+    annual_inflation_flat: null
+    annual_inflation_percentage: 3
+    annual_inflation_period_type: years
+    annual_inflation_period_value: 1
+    start_date:
+      month: 9
+      day: 10
+      year: 2024
+    end_date:
+      month: 8
+      day: 9
+      year: 2036
+  - name: "Amazon Prime (Person1)"
+    charge: 75
+    charge_period_type: years   # days | weeks | months | years
+    charge_period_value: 1
+    annual_inflation_flat: null
+    annual_inflation_percentage: 3
+    annual_inflation_period_type: years
+    annual_inflation_period_value: 1
+    start_date:
+      month: 8
+      day: 10
+      year: 2025
+    end_date: null
+  - name: "Spotify (Person1)"
+    charge: 5.99
+    charge_period_type: months   # days | weeks | months | years
+    charge_period_value: 1
+    annual_inflation_flat: null
+    annual_inflation_percentage: 3
+    annual_inflation_period_type: years
+    annual_inflation_period_value: 1
+    start_date:
+      month: 8
+      day: 1
+      year: 2025
+    end_date: null
+  - name: "Spotify (Person2)"
+    charge: 5.99
+    charge_period_type: months   # days | weeks | months | years
+    charge_period_value: 1
+    annual_inflation_flat: null
+    annual_inflation_percentage: 3
+    annual_inflation_period_type: years
+    annual_inflation_period_value: 1
+    start_date:
+      month: 8
+      day: 1
+      year: 2025
+    end_date: null
+debts:
+  - name: "[2036] Mortgage"
+    principal: 500000
+    balance: 500000
+    start_date:
+      month: 8
+      day: 9
+      year: 2036
+    end_date:
+      month: 8
+      day: 9
+      year: 2051
+    interest_rate: 5
+    interest_period_type: days   # days | weeks | months | years
+    interest_period_value: 1
+    charge_period_type: months   # days | weeks | months | years
+    charge_period_value: 1
+    asset:
+      name: "[2036] House"
+      type: house
+      value: 500000
+      appreciation_rate: 4
+      appreciation_period_type: years
+      appreciation_period_value: 1
+      pays_capital_gains_tax: True
+      sell_date: null
+  - name: "[2031] Person2 Car"
+    principal: 40000
+    balance: 40000
+    start_date:
+      month: 8
+      day: 9
+      year: 2031
+    end_date:
+      month: 8
+      day: 9
+      year: 2036
+    interest_rate: 4
+    interest_period_type: days   # days | weeks | months | years
+    interest_period_value: 1
+    charge_period_type: months   # days | weeks | months | years
+    charge_period_value: 1
+    asset:
+      name: "[2031] Person2 Car"
+      type: car
+      value: 40000
+      appreciation_rate: -10
+      appreciation_period_type: years
+      appreciation_period_value: 1
+      pays_capital_gains_tax: False
+      sell_date:
+        month: 8
+        day: 9
+        year: 2041
+  - name: "[2041] Person2 Car"
+    principal: 50000
+    balance: 50000
+    start_date:
+      month: 8
+      day: 9
+      year: 2041
+    end_date:
+      month: 8
+      day: 9
+      year: 2046
+    interest_rate: 4
+    interest_period_type: days   # days | weeks | months | years
+    interest_period_value: 1
+    charge_period_type: months   # days | weeks | months | years
+    charge_period_value: 1
+    asset:
+      name: "[2041] Person2 Car"
+      type: car
+      value: 50000
+      appreciation_rate: -10
+      appreciation_period_type: years
+      appreciation_period_value: 1
+      pays_capital_gains_tax: False
+      sell_date:
+        month: 8
+        day: 9
+        year: 2051
+  - name: "[2051] Person2 Car"
+    principal: 60000
+    balance: 60000
+    start_date:
+      month: 8
+      day: 9
+      year: 2051
+    end_date:
+      month: 8
+      day: 9
+      year: 2056
+    interest_rate: 4
+    interest_period_type: days   # days | weeks | months | years
+    interest_period_value: 1
+    charge_period_type: months   # days | weeks | months | years
+    charge_period_value: 1
+    asset:
+      name: "[2051] Person2 Car"
+      type: car
+      value: 60000
+      appreciation_rate: -10
+      appreciation_period_type: years
+      appreciation_period_value: 1
+      pays_capital_gains_tax: False
+      sell_date:
+        month: 8
+        day: 9
+        year: 2061
+  - name: "[2061] Person2 Car"
+    principal: 70000
+    balance: 70000
+    start_date:
+      month: 8
+      day: 9
+      year: 2061
+    end_date:
+      month: 8
+      day: 9
+      year: 2066
+    interest_rate: 4
+    interest_period_type: days   # days | weeks | months | years
+    interest_period_value: 1
+    charge_period_type: months   # days | weeks | months | years
+    charge_period_value: 1
+    asset:
+      name: "[2061] Person2 Car"
+      type: car
+      value: 70000
+      appreciation_rate: -10
+      appreciation_period_type: years
+      appreciation_period_value: 1
+      pays_capital_gains_tax: False
+      sell_date:
+        month: 8
+        day: 9
+        year: 2071
+  - name: "[2071] Person2 Car"
+    principal: 80000
+    balance: 80000
+    start_date:
+      month: 8
+      day: 9
+      year: 2071
+    end_date:
+      month: 8
+      day: 9
+      year: 2076
+    interest_rate: 4
+    interest_period_type: days   # days | weeks | months | years
+    interest_period_value: 1
+    charge_period_type: months   # days | weeks | months | years
+    charge_period_value: 1
+    asset:
+      name: "[2071] Person2 Car"
+      type: car
+      value: 80000
+      appreciation_rate: -10
+      appreciation_period_type: years
+      appreciation_period_value: 1
+      pays_capital_gains_tax: False
+      sell_date:
+        month: 8
+        day: 9
+        year: 2081
+  - name: "[2081] Person2 Car"
+    principal: 90000
+    balance: 90000
+    start_date:
+      month: 8
+      day: 9
+      year: 2081
+    end_date:
+      month: 8
+      day: 9
+      year: 2086
+    interest_rate: 4
+    interest_period_type: days   # days | weeks | months | years
+    interest_period_value: 1
+    charge_period_type: months   # days | weeks | months | years
+    charge_period_value: 1
+    asset:
+      name: "[2081] Person2 Car"
+      type: car
+      value: 90000
+      appreciation_rate: -10
+      appreciation_period_type: years
+      appreciation_period_value: 1
+      pays_capital_gains_tax: False
+      sell_date:
+        month: 8
+        day: 9
+        year: 2091
+  - name: "[2091] Person2 Car"
+    principal: 100000
+    balance: 100000
+    start_date:
+      month: 8
+      day: 9
+      year: 2091
+    end_date:
+      month: 8
+      day: 9
+      year: 2096
+    interest_rate: 4
+    interest_period_type: days   # days | weeks | months | years
+    interest_period_value: 1
+    charge_period_type: months   # days | weeks | months | years
+    charge_period_value: 1
+    asset:
+      name: "[2091] Person2 Car"
+      type: car
+      value: 100000
+      appreciation_rate: -10
+      appreciation_period_type: years
+      appreciation_period_value: 1
+      pays_capital_gains_tax: False
+      sell_date:
+        month: 8
+        day: 9
+        year: 2101
+  - name: "[2035] Person1 Car"
+    principal: 40000
+    balance: 40000
+    start_date:
+      month: 12
+      day: 18
+      year: 2035
+    end_date:
+      month: 12
+      day: 18
+      year: 2040
+    interest_rate: 4
+    interest_period_type: days   # days | weeks | months | years
+    interest_period_value: 1
+    charge_period_type: months   # days | weeks | months | years
+    charge_period_value: 1
+    asset:
+      name: "[2035] Person1 Car"
+      type: car
+      value: 40000
+      appreciation_rate: -10
+      appreciation_period_type: years
+      appreciation_period_value: 1
+      pays_capital_gains_tax: False
+      sell_date:
+        month: 12
+        day: 18
+        year: 2045
+  - name: "[2045] Person1 Car"
+    principal: 50000
+    balance: 50000
+    start_date:
+      month: 12
+      day: 18
+      year: 2045
+    end_date:
+      month: 12
+      day: 18
+      year: 2050
+    interest_rate: 4
+    interest_period_type: days   # days | weeks | months | years
+    interest_period_value: 1
+    charge_period_type: months   # days | weeks | months | years
+    charge_period_value: 1
+    asset:
+      name: "[2045] Person1 Car"
+      type: car
+      value: 50000
+      appreciation_rate: -10
+      appreciation_period_type: years
+      appreciation_period_value: 1
+      pays_capital_gains_tax: False
+      sell_date:
+        month: 12
+        day: 18
+        year: 2055
+  - name: "[2055] Person1 Car"
+    principal: 60000
+    balance: 60000
+    start_date:
+      month: 12
+      day: 18
+      year: 2055
+    end_date:
+      month: 12
+      day: 18
+      year: 2060
+    interest_rate: 4
+    interest_period_type: days   # days | weeks | months | years
+    interest_period_value: 1
+    charge_period_type: months   # days | weeks | months | years
+    charge_period_value: 1
+    asset:
+      name: "[2055] Person1 Car"
+      type: car
+      value: 60000
+      appreciation_rate: -10
+      appreciation_period_type: years
+      appreciation_period_value: 1
+      pays_capital_gains_tax: False
+      sell_date:
+        month: 12
+        day: 18
+        year: 2065
+  - name: "[2065] Person1 Car"
+    principal: 70000
+    balance: 70000
+    start_date:
+      month: 12
+      day: 18
+      year: 2065
+    end_date:
+      month: 12
+      day: 18
+      year: 2070
+    interest_rate: 4
+    interest_period_type: days   # days | weeks | months | years
+    interest_period_value: 1
+    charge_period_type: months   # days | weeks | months | years
+    charge_period_value: 1
+    asset:
+      name: "[2065] Person1 Car"
+      type: car
+      value: 70000
+      appreciation_rate: -10
+      appreciation_period_type: years
+      appreciation_period_value: 1
+      pays_capital_gains_tax: False
+      sell_date:
+        month: 12
+        day: 18
+        year: 2075
+  - name: "[2075] Person1 Car"
+    principal: 80000
+    balance: 80000
+    start_date:
+      month: 12
+      day: 18
+      year: 2075
+    end_date:
+      month: 12
+      day: 18
+      year: 2080
+    interest_rate: 4
+    interest_period_type: days   # days | weeks | months | years
+    interest_period_value: 1
+    charge_period_type: months   # days | weeks | months | years
+    charge_period_value: 1
+    asset:
+      name: "[2075] Person1 Car"
+      type: car
+      value: 80000
+      appreciation_rate: -10
+      appreciation_period_type: years
+      appreciation_period_value: 1
+      pays_capital_gains_tax: False
+      sell_date:
+        month: 12
+        day: 18
+        year: 2085
+  - name: "[2085] Person1 Car"
+    principal: 90000
+    balance: 90000
+    start_date:
+      month: 12
+      day: 18
+      year: 2085
+    end_date:
+      month: 12
+      day: 18
+      year: 2090
+    interest_rate: 4
+    interest_period_type: days   # days | weeks | months | years
+    interest_period_value: 1
+    charge_period_type: months   # days | weeks | months | years
+    charge_period_value: 1
+    asset:
+      name: "[2085] Person1 Car"
+      type: car
+      value: 90000
+      appreciation_rate: -10
+      appreciation_period_type: years
+      appreciation_period_value: 1
+      pays_capital_gains_tax: False
+      sell_date:
+        month: 12
+        day: 18
+        year: 2095
+  - name: "2019 Ecosport"
+    principal: 25269.24
+    balance: 13935
+    start_date:
+      month: 10
+      day: 20
+      year: 2022
+    end_date:
+      month: 10
+      day: 20
+      year: 2028
+    interest_rate: 5.5
+    interest_period_type: months  # days | weeks | months | years
+    interest_period_value: 1
+    charge_period_type: months   # days | weeks | months | years
+    charge_period_value: 1
+    asset:
+      name: "2019 Ecosport"
+      type: car
+      value: 9000
+      appreciation_rate: -10
+      appreciation_period_type: years
+      appreciation_period_value: 1
+      pays_capital_gains_tax: False
+      sell_date:
+        month: 12
+        day: 18
+        year: 2035
+  - name: "Private Student Loans (Person2)"
+    principal: 72000
+    balance: 72393.41
+    start_date:
+      month: 8
+      day: 21
+      year: 2025
+    end_date:
+      month: 8
+      day: 21
+      year: 2045
+    interest_rate: 9.5
+    interest_period_type: days   # days | weeks | months | years
+    interest_period_value: 1
+    charge_period_type: months   # days | weeks | months | years
+    charge_period_value: 1
+    asset: null
+  - name: "1-03 Direct Loan - Subsidized (Person1)"
+    principal: 5500
+    balance: 5500
+    start_date:
+      month: 2
+      day: 21
+      year: 2026
+    end_date:
+      month: 2
+      day: 21
+      year: 2036
+    interest_rate: 6.53
+    interest_period_type: days   # days | weeks | months | years
+    interest_period_value: 1
+    charge_period_type: months   # days | weeks | months | years
+    charge_period_value: 1
+    asset: null
+  - name: "1-04 Direct Loan - Unsubsidized (Person1)"
+    principal: 1851.22
+    balance: 1851.22
+    start_date:
+      month: 2
+      day: 21
+      year: 2026
+    end_date:
+      month: 2
+      day: 21
+      year: 2036
+    interest_rate: 6.53
+    interest_period_type: days   # days | weeks | months | years
+    interest_period_value: 1
+    charge_period_type: months   # days | weeks | months | years
+    charge_period_value: 1
+    asset: null
+  - name: "1-02 Direct Loan - Subsidized (Person2)"
+    principal: 1831.34
+    balance: 1831.34
+    start_date:
+      month: 8
+      day: 21
+      year: 2025
+    end_date:
+      month: 8
+      day: 21
+      year: 2035
+    interest_rate: 6.53
+    interest_period_type: days   # days | weeks | months | years
+    interest_period_value: 1
+    charge_period_type: months   # days | weeks | months | years
+    charge_period_value: 1
+    asset: null
+  - name: "1-03 Direct Loan - Unsubsidized (Person2)"
+    principal: 2429.79
+    balance: 2429.79
+    start_date:
+      month: 8
+      day: 21
+      year: 2025
+    end_date:
+      month: 8
+      day: 21
+      year: 2035
+    interest_rate: 6.53
+    interest_period_type: days   # days | weeks | months | years
+    interest_period_value: 1
+    charge_period_type: months   # days | weeks | months | years
+    charge_period_value: 1
+    asset: null
+  - name: "1-01 Direct Loan - Subsidized (Person1)"
+    principal: 4500
+    balance: 4500
+    start_date:
+      month: 2
+      day: 21
+      year: 2026
+    end_date:
+      month: 2
+      day: 21
+      year: 2036
+    interest_rate: 5.5
+    interest_period_type: days   # days | weeks | months | years
+    interest_period_value: 1
+    charge_period_type: months   # days | weeks | months | years
+    charge_period_value: 1
+    asset: null
+  - name: "1-02 Direct Loan - Unsubsidized (Person1)"
+    principal: 3637
+    balance: 3637
+    start_date:
+      month: 2
+      day: 21
+      year: 2026
+    end_date:
+      month: 2
+      day: 21
+      year: 2036
+    interest_rate: 5.5
+    interest_period_type: days   # days | weeks | months | years
+    interest_period_value: 1
+    charge_period_type: months   # days | weeks | months | years
+    charge_period_value: 1
+    asset: null
+  - name: "1-01 Direct Loan - Subsidized (Person2)"
+    principal: 5488.82
+    balance: 5488.82
+    start_date:
+      month: 8
+      day: 21
+      year: 2025
+    end_date:
+      month: 8
+      day: 21
+      year: 2035
+    interest_rate: 5.5
+    interest_period_type: days   # days | weeks | months | years
+    interest_period_value: 1
+    charge_period_type: months   # days | weeks | months | years
+    charge_period_value: 1
+    asset: null
+income:
+  - name: "[Person1] Company1"
+    gross: 85000
+    health_insurance_premium: 15
+    401k: 5100
+    401k_employer_contribution: 3400
+    hsa: 4100
+    hsa_employer_contribution: 200
+    annual_inflation_flat: null
+    annual_inflation_percentage: 5
+    annual_inflation_period_type: years
+    annual_inflation_period_value: 1
+    state_tax_percentage: 4.25
+    city_tax_percentage: 0
+    payment_period_type: weeks   # days | weeks | months | years
+    payment_period_value: 2
+    start_date:
+      month: 9
+      day: 16
+      year: 2025
+    end_date:
+      month: 12
+      day: 18
+      year: 2060
+assets: []
+dob:
+  month: 12
+  day: 18
+  year: 1995
+output:
+  pause_on_output: true
+  every_day: false
+  every_week: false
+  every_month: false
+  every_year: true
+  every_decade: true
+  start_date:
+    month: 9
+    day: 24
+    year: 2025
+  end_date:
+    month: 12
+    day: 18
+    year: 2060

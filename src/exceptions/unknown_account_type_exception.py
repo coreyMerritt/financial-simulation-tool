@@ -1,0 +1,2 @@
+class UnknownAccountTypeException(Exception):
+  pass

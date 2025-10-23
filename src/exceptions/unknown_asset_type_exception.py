@@ -1,0 +1,2 @@
+class UnknownAssetTypeException(Exception):
+  pass

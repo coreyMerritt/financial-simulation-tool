@@ -1,0 +1,13 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Python: Launch",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/main.py",  // or your entry point
+      "cwd": "${workspaceFolder}",                  // forces root as working dir
+      "console": "integratedTerminal"
+    }
+  ]
+}

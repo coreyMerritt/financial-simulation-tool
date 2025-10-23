@@ -1,0 +1,2 @@
+- Bug regarding the first asset not ever being paid off
+- Massive refactor to proper OOP structure -- break down main.py

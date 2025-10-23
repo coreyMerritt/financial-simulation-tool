@@ -1,0 +1,33 @@
+[project]
+name = "financial-simulation-tool"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+  "numpy_financial>=1.0.0",
+  "python-dateutil>=2.9.0.post0",
+  "pyyaml>=6.0.3"
+]
+
+[project.optional-dependencies]
+dev = [
+  "types-PyYAML>=6.0.12.20250915",
+  # Linters/Tests
+  "isort",
+  "mypy",
+  "pylint",
+  "pytest",
+  "ruff",
+]
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.isort]
+indent = "  "
+line_length = 120
+
+[tool.mypy]
+explicit_package_bases = true
+mypy_path = "src"
+

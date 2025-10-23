@@ -1,0 +1,2 @@
+class InvalidMinimumMonthlyPaymentException(Exception):
+  pass
