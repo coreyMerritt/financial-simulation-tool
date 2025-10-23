@@ -23,8 +23,16 @@ if [[ -d "./config" && -d "./config/model" ]]; then
 fi
 
 # Ensure we're in venv
+venv_existed=1
+if [[ ! -d .venv ]]; then
+  python3 -m venv .venv
+  venv_existed=0
+fi
 if [[ -f .venv/bin/activate ]]; then
   source .venv/bin/activate
+fi
+if [[ ! $venv_existed -eq 1 ]]; then
+  pip install .
 fi
 
 # Start script -- pass args
