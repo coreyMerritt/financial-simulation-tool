@@ -2,6 +2,7 @@
 
 import datetime
 import os
+from pathlib import Path
 import sys
 from zoneinfo import ZoneInfo
 
@@ -46,6 +47,7 @@ from models.enums.time_period_type import TimePeriodType
 
 def main():
   today = datetime.datetime.now(tz=ZoneInfo(os.getenv("TZ", "UTC"))).date()
+  start_day = today
   full_config = __build_full_config("./config/prod/main.yml")
   assert isinstance(full_config, FullConfig)
   married = full_config.married
@@ -119,7 +121,7 @@ def main():
       if IS_SHUFFLE_DAY:
         __shuffle_funds(age, full_config.payment_order, accounts)
       if IS_PRINT_DAY:
-        __print_summary(today, debts, accounts, assets)
+        __print_summary(start_day, today, debts, accounts, assets)
       if IS_PRINT_DAY and full_config.output.pause_on_output:
         print(f"\n\t[{__get_formatted_date(today)} --- Age: {age.years}]")
         input("\nPress enter to continue...\n")
@@ -130,7 +132,7 @@ def main():
     print(f"{"Obtained from stock market":>26} (Includes taxes and fees): {f'${taken_from_stock_market:,.2f}':>14}\n")
   except BankruptException as b:
     __print_new_day_header(today, age)
-    __print_summary(today, debts, accounts, assets)
+    __print_summary(start_day, today, debts, accounts, assets)
     print(f"\nUnable to pay: \033[38;2;255;0;0m${b.get_money_needed():,.2f}\n\tBankrupt\n\033[0m")
     sys.exit(0)
 
@@ -642,7 +644,13 @@ def __print_header(header: str) -> None:
   print("=" * 50)
   print(" " * 50)
 
-def __print_summary(today: datetime.date, debts: list[Debt], accounts: list[Account], assets: list[Asset]) -> None:
+def __print_summary(
+  start_day: datetime.date,
+  today: datetime.date,
+  debts: list[Debt],
+  accounts: list[Account],
+  assets: list[Asset]
+) -> None:
   __print_header("End of Day Summary")
   # Debts
   print("Debt Balances:")
@@ -680,6 +688,18 @@ def __print_summary(today: datetime.date, debts: list[Debt], accounts: list[Acco
   # Net Worth
   net_worth = total_account_balance + total_assets_value - total_debt_balance
   print(f"\nNet Worth: \033[38;2;0;255;255m${net_worth:,.2f}\033[0m\n")
+  # Log report to disk
+  output_path = Path(f"output/{start_day}.yaml")
+  if not output_path.parent.exists():
+    output_path.parent.mkdir()
+  if output_path.exists():
+    with output_path.open("r", encoding="utf-8") as output_file:
+      output_dict = yaml.safe_load(output_file)
+  else:
+    output_dict = {}
+  output_dict[str(today)] = f"${net_worth:,.2f}"
+  with output_path.open("w", encoding="utf-8") as output_file:
+    yaml.safe_dump(output_dict, output_file)
 
 def __is_income_payment(incomes: list[IncomeStream], today: datetime.date) -> bool:
   for income in incomes:
