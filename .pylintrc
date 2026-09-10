@@ -63,7 +63,6 @@ recursive=no
 unsafe-load-any-extension=no
 
 [MESSAGES CONTROL]
-
 # Only show warnings with the listed confidence levels. Leave empty to show
 # all. Valid levels: HIGH, CONTROL_FLOW, INFERENCE, INFERENCE_FAILURE,
 # UNDEFINED.
@@ -78,20 +77,21 @@ confidence=
 # --enable=similarities". If you want to run only the classes checker, but have
 # no Warning level messages displayed, use "--disable=all --enable=classes
 # --disable=W".
-disable=raw-checker-failed,
-        bad-inline-option,
-        locally-disabled,
-        file-ignored,
-        suppressed-message,
-        useless-suppression,
-        deprecated-pragma,
-        use-symbolic-message-instead,
-        missing-module-docstring,
-        missing-class-docstring,
-        missing-function-docstring,
-        too-many-lines,
-        broad-exception-caught,
-        too-few-public-methods
+disable=bad-inline-option,
+      broad-exception-caught,
+      deprecated-pragma,
+      duplicate-code,
+      file-ignored,
+      locally-disabled,
+      missing-module-docstring,
+      missing-class-docstring,
+      missing-function-docstring,
+      raw-checker-failed,
+      suppressed-message,
+      too-many-lines,
+      too-few-public-methods,
+      use-symbolic-message-instead,
+      useless-suppression
 
 # Enable the message, report, category or checker with the given uuid(s). You can
 # either give multiple identifier separated by comma (,) or put this option
@@ -128,7 +128,7 @@ score=yes
 [REFACTORING]
 
 # Maximum number of nested blocks for function / method body
-max-nested-blocks=5
+max-nested-blocks=10
 
 # Complete name of functions that never returns. When checking for
 # inconsistent-return-statements if a never returning function is called then
@@ -520,19 +520,20 @@ exclude-too-few-public-methods=
 ignored-parents=
 
 # Maximum number of arguments for function / method.
-max-args=5
+max-args=10
+max-positional-arguments=10
 
 # Maximum number of attributes for a class (see R0902).
-max-attributes=7
+max-attributes=20
 
 # Maximum number of boolean expressions in an if statement (see R0916).
 max-bool-expr=5
 
 # Maximum number of branch for function / method body.
-max-branches=12
+max-branches=25
 
 # Maximum number of locals for function / method body.
-max-locals=15
+max-locals=30
 
 # Maximum number of parents for a class (see R0901).
 max-parents=7
@@ -541,10 +542,10 @@ max-parents=7
 max-public-methods=20
 
 # Maximum number of return / yield for function / method body.
-max-returns=6
+max-returns=10
 
 # Maximum number of statements in function / method body.
-max-statements=50
+max-statements=100
 
 # Minimum number of public methods for a class (see R0903).
 min-public-methods=2

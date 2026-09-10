@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from datetime import date
+
 from models.enums.account_type import AccountType
 from models.enums.time_period_type import TimePeriodType
 

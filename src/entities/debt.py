@@ -1,6 +1,7 @@
 from datetime import date
-from typing import List
+
 from dateutil.relativedelta import relativedelta
+
 from entities.account import Account
 from entities.asset import Asset
 from entities.external_entities.debtor import Debtor
@@ -164,8 +165,8 @@ class Debt:
     is_print_day: bool,
     today: date,
     age: relativedelta,
-    accounts: List[Account],
-    assets: List[Asset]
+    accounts: list[Account],
+    assets: list[Asset]
   ) -> None:
     if not self.is_charge_today(today):
       return
@@ -185,7 +186,7 @@ class Debt:
         return
       elif today > self._start_date:
         raise RuntimeError("No last_charge_date AND is later than start_date")
-    total_balance = 0
+    total_balance = 0.0
     for account in accounts:
       total_balance += account.get_post_tax_balance(age)
     if total_balance < charge:
@@ -200,11 +201,10 @@ class Debt:
         Debtor.give(running_charge_withdrawn)
         running_charge = 0
         break
-      else:
-        account_balance_withdrawn = account.withdraw(account_balance, age)
-        self.pay(account_balance_withdrawn)
-        Debtor.give(account_balance_withdrawn)
-        running_charge -= account_balance_withdrawn
+      account_balance_withdrawn = account.withdraw(account_balance, age)
+      self.pay(account_balance_withdrawn)
+      Debtor.give(account_balance_withdrawn)
+      running_charge -= account_balance_withdrawn
     self._last_charge_date = today
     if is_print_day:
       if self._charge_period_type == TimePeriodType.DAYS:
@@ -217,12 +217,14 @@ class Debt:
         print(f"  [Yearly]  {self._name} Charge: \033[38;2;255;0;0m-${charge:,.2f}\033[0m")
       else:
         raise RuntimeError("Unknown ChargePeriodType")
-    if self._balance == 0:
-      if self._asset:
-        for asset in assets:
-          if asset.get_name() == self._asset.get_name():
-            asset.set_is_paid_off(True)
-            break
+    if (
+      self._balance == 0
+      and self._asset
+    ):
+      for asset in assets:
+        if asset.get_name() == self._asset.get_name():
+          asset.set_is_paid_off(True)
+          break
 
   def __is_last_charge(self) -> bool:
     if self._charge_period_type == TimePeriodType.DAYS:
@@ -243,6 +245,4 @@ class Debt:
       self._start_date,
       self._end_date
     )
-    if minimum_monthly_payment >= self._balance:
-      return True
-    return False
+    return minimum_monthly_payment >= self._balance

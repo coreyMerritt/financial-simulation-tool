@@ -1,6 +1,6 @@
 from datetime import date
-from typing import List, Tuple
-import numpy_financial as npf
+
+import numpy_financial as npf  # type: ignore[import-untyped]
 
 
 class FinancialCalculator:
@@ -8,7 +8,7 @@ class FinancialCalculator:
   def calculate_federal_tax(is_married: bool, gross_income: float) -> float:
     if is_married:
       standard_deduction = 29200  # 2025 married filing jointly
-      brackets: List[Tuple[float, float, float]] = [
+      brackets: list[tuple[float, float, float]] = [
         (0, 23200, 0.10),
         (23200, 94300, 0.12),
         (94300, 201050, 0.22),

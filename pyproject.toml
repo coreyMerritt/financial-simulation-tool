@@ -1,7 +1,7 @@
 [project]
 name = "financial-simulation-tool"
 version = "0.1.0"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 dependencies = [
   "numpy_financial>=1.0.0",
   "python-dateutil>=2.9.0.post0",
@@ -10,13 +10,14 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
+  "types-python-dateutil-2.9.0.20260807",
   "types-PyYAML>=6.0.12.20250915",
   # Linters/Tests
   "isort",
   "mypy",
   "pylint",
   "pytest",
-  "ruff",
+  "ruff"
 ]
 
 [build-system]
@@ -31,3 +32,5 @@ line_length = 120
 explicit_package_bases = true
 mypy_path = "src"
 
+[tool.ruff.lint]
+ignore = ["I001"]

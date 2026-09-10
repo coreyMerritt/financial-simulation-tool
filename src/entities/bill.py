@@ -1,6 +1,7 @@
 from datetime import date
-from typing import List
+
 from dateutil.relativedelta import relativedelta
+
 from entities.account import Account
 from entities.external_entities.biller import Biller
 from exceptions.bankrupt_exception import BankruptException
@@ -8,7 +9,7 @@ from models.configs.bill_config import BillConfig
 from models.enums.time_period_type import TimePeriodType
 
 
-class Bill():
+class Bill:
   _name: str
   _charge: float
   _charge_period_type: TimePeriodType
@@ -170,7 +171,7 @@ class Bill():
     is_print_day: bool,
     today: date,
     age: relativedelta,
-    accounts: List[Account]
+    accounts: list[Account]
   ) -> None:
     if not self.is_charge_today(today):
       return
@@ -179,7 +180,7 @@ class Bill():
         self._last_charge_date = today
       else:
         return
-    total_account_balances = 0
+    total_account_balances = 0.0
     for account in accounts:
       total_account_balances += account.get_post_tax_balance(age)
     if total_account_balances < self._charge:
@@ -191,9 +192,8 @@ class Bill():
         Biller.give(account.withdraw(running_charge, age))
         running_charge = 0
         break
-      else:
-        Biller.give(account.withdraw(account_balance, age))
-        running_charge -= account_balance
+      Biller.give(account.withdraw(account_balance, age))
+      running_charge -= account_balance
     self._last_charge_date = today
     if is_print_day:
       if self._charge_period_type == TimePeriodType.DAYS:

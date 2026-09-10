@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
-from datetime import date
+
+import datetime
+import os
 import sys
-from typing import List
-from dateutil.relativedelta import relativedelta
+from zoneinfo import ZoneInfo
+
 import yaml
+from dateutil.relativedelta import relativedelta
+
 from entities.account import Account
 from entities.accounting_record import AccountingRecord
 from entities.asset import Asset
@@ -16,14 +20,15 @@ from entities.external_entities.city_government import CityGovernment
 from entities.external_entities.debtor import Debtor
 from entities.external_entities.department_of_social_security import DepartmentOfSocialSecurity
 from entities.external_entities.employer import Employer
-from entities.external_entities.internal_revenue_service import InternalRevenueService
 from entities.external_entities.healthcare_provider import HealthcareProvider
+from entities.external_entities.internal_revenue_service import InternalRevenueService
 from entities.external_entities.state_government import StateGovernment
 from entities.external_entities.stock_market import StockMarket
 from entities.external_entities.us_treasury import UsTreasury
 from entities.income import IncomeStream
 from entities.misc.annual_federal_income_tax_record import AnnualFederalIncomeTaxRecord
 from exceptions.bankrupt_exception import BankruptException
+from exceptions.completed_exception import CompletedException
 from exceptions.unknown_account_type_exception import UnknownAccountTypeException
 from exceptions.unknown_asset_type_exception import UnknownAssetTypeException
 from exceptions.unknown_time_period_type_exception import UnknownTimePeriodTypeException
@@ -40,7 +45,7 @@ from models.enums.time_period_type import TimePeriodType
 
 
 def main():
-  today = date.today()
+  today = datetime.datetime.now(tz=ZoneInfo(os.getenv("TZ", "UTC"))).date()
   full_config = __build_full_config("./config/prod/main.yml")
   assert isinstance(full_config, FullConfig)
   married = full_config.married
@@ -49,12 +54,9 @@ def main():
     is_married = married
   elif isinstance(married, int):
     year_married = married
-    if today.year >= year_married:
-      is_married = True
-    else:
-      is_married = False
+    is_married = today.year >= year_married
   else:
-    raise RuntimeError("Bad value for \"married\"")
+    raise TypeError("Bad value for \"married\"")
   DATE_OF_BIRTH = full_config.dob
   accounts = __build_accounts(today, full_config.accounts)
   bills = __build_starting_bills(today, full_config.bills)
@@ -81,7 +83,10 @@ def main():
       __check_for_ended_bills(today, bills)
       __check_for_ended_debts(today, debts)
       __check_for_ended_incomes(today, income_streams)
-      IS_PRINT_DAY = __is_print_day(full_config, today, last_output_date)
+      try:
+        IS_PRINT_DAY = __is_print_day(full_config, today, last_output_date)
+      except CompletedException:
+        return
       if IS_PRINT_DAY:
         last_output_date = today
         __print_new_day_header(today, age)
@@ -132,12 +137,12 @@ def main():
 def __handle_todays_income(
   is_print_day: bool,
   is_married: bool,
-  today: date,
+  today: datetime.date,
   annual_federal_income_tax_record: AnnualFederalIncomeTaxRecord,
-  accounts: List[Account],
-  debts: List[Debt],
-  income_streams: List[IncomeStream],
-  payment_order: List[List]
+  accounts: list[Account],
+  debts: list[Debt],
+  income_streams: list[IncomeStream],
+  payment_order: list[list]
 ) -> None:
   IS_INCOME_PRINT_DAY = is_print_day and __is_income_payment(income_streams, today)
   if IS_INCOME_PRINT_DAY:
@@ -157,8 +162,8 @@ def __handle_todays_income(
 
 def __handle_todays_appreciation(
   is_print_day: bool,
-  today: date,
-  assets: List[Asset]
+  today: datetime.date,
+  assets: list[Asset]
 ) -> None:
   IS_APPRECIATION_PRINT_DAY = is_print_day and __is_asset_appreciation(assets, today)
   if IS_APPRECIATION_PRINT_DAY:
@@ -170,9 +175,9 @@ def __handle_todays_appreciation(
 
 def __handle_todays_interest(
   is_print_day: bool,
-  today: date,
-  accounts: List[Account],
-  debts: List[Debt]
+  today: datetime.date,
+  accounts: list[Account],
+  debts: list[Debt]
 ) -> None:
   IS_ACCOUNT_INTEREST_PRINT_DAY = is_print_day and __is_account_interest(accounts, today)
   IS_DEBT_INTEREST_PRINT_DAY = is_print_day and __is_debt_interest(debts, today)
@@ -191,8 +196,8 @@ def __handle_todays_interest(
 
 def __handle_todays_capital_gains(
   is_print_day: bool,
-  today: date,
-  accounts: List[Account]
+  today: datetime.date,
+  accounts: list[Account]
 ) -> None:
   IS_ACCOUNT_CAPITAL_GAINS_PRINT_DAY = is_print_day and __is_capital_gains(accounts, today)
   if IS_ACCOUNT_CAPITAL_GAINS_PRINT_DAY:
@@ -204,9 +209,9 @@ def __handle_todays_capital_gains(
 
 def __handle_todays_inflation_adjustments(
   is_print_day: bool,
-  today: date,
-  bills: List[Bill],
-  incomes: List[IncomeStream]
+  today: datetime.date,
+  bills: list[Bill],
+  incomes: list[IncomeStream]
 ):
   IS_BILL_INFLATION_ADJUSTMENT_PRINT_DAY = is_print_day and __is_bill_charge_increase(bills, today)
   if IS_BILL_INFLATION_ADJUSTMENT_PRINT_DAY:
@@ -221,12 +226,12 @@ def __handle_todays_inflation_adjustments(
 
 def __handle_todays_payments(
   is_print_day: bool,
-  today: date,
+  today: datetime.date,
   age: relativedelta,
-  accounts: List[Account],
-  assets: List[Asset],
-  bills: List[Bill],
-  debts: List[Debt]
+  accounts: list[Account],
+  assets: list[Asset],
+  bills: list[Bill],
+  debts: list[Debt]
 ) -> None:
   IS_BILL_PAYMENT_PRINT_DAY = is_print_day and __is_bill_charge(bills, today)
   IS_DEBT_PAYMENT_PRINT_DAY = is_print_day and __is_debt_charge(debts, today)
@@ -237,7 +242,7 @@ def __handle_todays_payments(
       bill.handle_potential_charge(is_print_day, today, age, accounts)
     except BankruptException as e:
       if __get_total_available_funds(age, accounts, assets) < e.get_money_needed():
-        raise e
+        raise
       __sell_appropriate_assets(e.get_money_needed(), assets, accounts)
       assets = [a for a in assets if not a.is_sold()]
       bill.handle_potential_charge(is_print_day, today, age, accounts)
@@ -250,7 +255,7 @@ def __handle_todays_payments(
       debt.handle_charges(is_print_day, today, age, accounts, assets)
     except BankruptException as e:
       if __get_total_available_funds(age, accounts, assets) < e.get_money_needed():
-        raise e
+        raise
       __sell_appropriate_assets(e.get_money_needed(), assets, accounts)
       assets = [a for a in assets if not a.is_sold()]
       debt.handle_charges(is_print_day, today, age, accounts, assets)
@@ -291,8 +296,8 @@ def __build_output_config(output_dict: dict) -> OutputConfig:
   )
   return output_config
 
-def __build_accounts_configs(accounts_list: List[dict]) -> List[AccountConfig]:
-  account_configs: List[AccountConfig] = []
+def __build_accounts_configs(accounts_list: list[dict]) -> list[AccountConfig]:
+  account_configs: list[AccountConfig] = []
   for account in accounts_list:
     account_type = __build_account_type(account["type"])
     interest_period_type = __build_time_period_type(account["interest_period_type"])
@@ -312,8 +317,8 @@ def __build_accounts_configs(accounts_list: List[dict]) -> List[AccountConfig]:
     ))
   return account_configs
 
-def __build_debts_configs(debts_list: List[dict]) -> List[DebtConfig]:
-  debt_configs: List[DebtConfig] = []
+def __build_debts_configs(debts_list: list[dict]) -> list[DebtConfig]:
+  debt_configs: list[DebtConfig] = []
   for debt in debts_list:
     interest_period_type = __build_time_period_type(debt["interest_period_type"])
     assert interest_period_type
@@ -341,8 +346,8 @@ def __build_debts_configs(debts_list: List[dict]) -> List[DebtConfig]:
     ))
   return debt_configs
 
-def __build_income_configs(incomes_list: List[dict]) -> List[IncomeStreamConfig]:
-  income_configs: List[IncomeStreamConfig] = []
+def __build_income_configs(incomes_list: list[dict]) -> list[IncomeStreamConfig]:
+  income_configs: list[IncomeStreamConfig] = []
   for income in incomes_list:
     payment_period_type = __build_time_period_type(income["payment_period_type"])
     assert payment_period_type
@@ -373,8 +378,8 @@ def __build_income_configs(incomes_list: List[dict]) -> List[IncomeStreamConfig]
     ))
   return income_configs
 
-def __build_asset_configs(assets_list: List[dict]) -> List[AssetConfig]:
-  asset_configs: List[AssetConfig] = []
+def __build_asset_configs(assets_list: list[dict]) -> list[AssetConfig]:
+  asset_configs: list[AssetConfig] = []
   for asset in assets_list:
     asset_type = __build_asset_type(asset["type"])
     assert asset_type
@@ -393,8 +398,8 @@ def __build_asset_configs(assets_list: List[dict]) -> List[AssetConfig]:
     ))
   return asset_configs
 
-def __build_bills_configs(bills_list: List[dict]) -> List[BillConfig]:
-  bill_configs: List[BillConfig] = []
+def __build_bills_configs(bills_list: list[dict]) -> list[BillConfig]:
+  bill_configs: list[BillConfig] = []
   for bill in bills_list:
     charge_period_type = __build_time_period_type(bill["charge_period_type"])
     assert charge_period_type
@@ -462,20 +467,20 @@ def __build_asset_type(asset_type_str: str | None) -> AssetType | None:
     raise UnknownAssetTypeException(f"Given AssetType: {asset_type_str}")
   return asset_type
 
-def __build_date(date_dict: dict | None) -> date | None:
+def __build_date(date_dict: dict | None) -> datetime.date | None:
   if date_dict is None:
     return None
-  return date(
+  return datetime.date(
     month=date_dict["month"],
     day=date_dict["day"],
     year=date_dict["year"]
   )
 
 def __build_accounts(
-  today: date,
-  account_configs: List[AccountConfig]
-) -> List[Account]:
-  accounts: List[Account] = []
+  today: datetime.date,
+  account_configs: list[AccountConfig]
+) -> list[Account]:
+  accounts: list[Account] = []
   for config in account_configs:
     accounts.append(Account(
       today=today,
@@ -483,8 +488,8 @@ def __build_accounts(
     ))
   return accounts
 
-def __build_starting_bills(today: date, bills_configs: List[BillConfig]) -> List[Bill]:
-  bills: List[Bill] = []
+def __build_starting_bills(today: datetime.date, bills_configs: list[BillConfig]) -> list[Bill]:
+  bills: list[Bill] = []
   for config in bills_configs:
     if today >= config.start_date:
       bills.append(Bill(
@@ -493,8 +498,8 @@ def __build_starting_bills(today: date, bills_configs: List[BillConfig]) -> List
       ))
   return bills
 
-def __build_starting_debts(today: date, debts_configs: List[DebtConfig]) -> List[Debt]:
-  debts: List[Debt] = []
+def __build_starting_debts(today: datetime.date, debts_configs: list[DebtConfig]) -> list[Debt]:
+  debts: list[Debt] = []
   for config in debts_configs:
     if today >= config.start_date:
       debts.append(Debt(
@@ -503,8 +508,8 @@ def __build_starting_debts(today: date, debts_configs: List[DebtConfig]) -> List
       ))
   return debts
 
-def __build_starting_incomes(today: date, incomes_configs: List[IncomeStreamConfig]) -> List[IncomeStream]:
-  incomes: List[IncomeStream] = []
+def __build_starting_incomes(today: datetime.date, incomes_configs: list[IncomeStreamConfig]) -> list[IncomeStream]:
+  incomes: list[IncomeStream] = []
   for config in incomes_configs:
     if today >= config.start_date:
       incomes.append(IncomeStream(
@@ -513,8 +518,8 @@ def __build_starting_incomes(today: date, incomes_configs: List[IncomeStreamConf
       ))
   return incomes
 
-def __build_all_assets(today: date, assets_configs: List[AssetConfig]) -> List[Asset]:
-  assets: List[Asset] = []
+def __build_all_assets(today: datetime.date, assets_configs: list[AssetConfig]) -> list[Asset]:
+  assets: list[Asset] = []
   for config in assets_configs:
     assets.append(Asset(
       True,
@@ -523,92 +528,98 @@ def __build_all_assets(today: date, assets_configs: List[AssetConfig]) -> List[A
     ))
   return assets
 
-def __check_for_new_bills(today: date, bills_configs: List[BillConfig], bills: List[Bill]) -> None:
+def __check_for_new_bills(today: datetime.date, bills_configs: list[BillConfig], bills: list[Bill]) -> None:
   for config in bills_configs:
     if config.start_date == today:
       bills.append(Bill(today=today, bill_config=config))
 
-def __check_for_new_debts(today: date, debts_configs: List[DebtConfig], debts: List[Debt]) -> None:
+def __check_for_new_debts(today: datetime.date, debts_configs: list[DebtConfig], debts: list[Debt]) -> None:
   for config in debts_configs:
     if config.start_date == today:
       debts.append(Debt(today=today, debt_config=config))
 
 def __check_for_new_incomes(
-  today: date,
-  incomes_configs: List[IncomeStreamConfig],
-  incomes: List[IncomeStream]
+  today: datetime.date,
+  incomes_configs: list[IncomeStreamConfig],
+  incomes: list[IncomeStream]
 ) -> None:
   for config in incomes_configs:
     if config.start_date == today:
       incomes.append(IncomeStream(today=today, income_config=config))
 
-def __check_for_new_assets(assets: List[Asset], debts: List[Debt], today: date) -> None:
+def __check_for_new_assets(assets: list[Asset], debts: list[Debt], today: datetime.date) -> None:
   for debt in debts:
     if today >= debt.get_start_date():
       debt_asset = debt.get_asset()
-      if debt_asset:
-        if debt_asset not in assets:
-          assets.append(debt_asset)
+      if (
+        debt_asset
+        and debt_asset not in assets
+      ):
+        assets.append(debt_asset)
 
-def __check_asset_sell_dates(today: date, accounts: List[Account], assets: List[Asset]) -> None:
+def __check_asset_sell_dates(today: datetime.date, accounts: list[Account], assets: list[Asset]) -> None:
   for asset in assets:
     sell_date = asset.get_sell_date()
-    if sell_date:
-      if sell_date == today:
-        if asset.is_sellable():
-          for account in accounts:
-            if account.get_type() == AccountType.INVESTMENT:
-              sold_assets_worth = asset.sell()
-              worth_taken_from_buyer = Buyer.take(sold_assets_worth)
-              account.deposit(worth_taken_from_buyer)
-              break
+    if (
+      sell_date
+      and sell_date == today
+      and asset.is_sellable()
+    ):
+      for account in accounts:
+        if account.get_type() == AccountType.INVESTMENT:
+          sold_assets_worth = asset.sell()
+          worth_taken_from_buyer = Buyer.take(sold_assets_worth)
+          account.deposit(worth_taken_from_buyer)
+          break
 
-def __check_for_ended_bills(today: date, bills: List[Bill]) -> None:
+def __check_for_ended_bills(today: datetime.date, bills: list[Bill]) -> None:
   for bill in bills:
     end_date = bill.get_end_date()
-    if end_date:
-      if today > end_date:
-        bills.remove(bill)
+    if (
+      end_date
+      and today > end_date
+    ):
+      bills.remove(bill)
 
-def __check_for_ended_debts(today: date, debts: List[Debt]) -> None:
+def __check_for_ended_debts(today: datetime.date, debts: list[Debt]) -> None:
   for debt in debts:
     if today > debt.get_end_date():
       debts.remove(debt)
 
-def __check_for_ended_incomes(today: date, incomes: List[IncomeStream]) -> None:
+def __check_for_ended_incomes(today: datetime.date, incomes: list[IncomeStream]) -> None:
   for income in incomes:
     if today > income.get_end_date():
       incomes.remove(income)
 
 def __is_print_day(
   full_config: FullConfig,
-  today: date,
-  last_output_date: date
+  today: datetime.date,
+  last_output_date: datetime.date
 ) -> bool:
   if full_config.output.start_date and today < full_config.output.start_date:
     return False
   if today > full_config.output.end_date:
-    sys.exit(0)   # TODO: This really shouldn't just be dropped in here
+    raise CompletedException
   if today == full_config.output.start_date:
     return True
   if today == full_config.output.end_date:
     return True
   if full_config.output.every_day:
     return True
-  elif full_config.output.every_week:
+  if full_config.output.every_week:
     return (today - last_output_date).days >= 7
-  elif full_config.output.every_month:
+  if full_config.output.every_month:
     diff = relativedelta(today, last_output_date)
     return diff.months >= 1 or diff.years >= 1
-  elif full_config.output.every_year:
+  if full_config.output.every_year:
     diff = relativedelta(today, last_output_date)
     return diff.years >= 1
-  elif full_config.output.every_decade:
+  if full_config.output.every_decade:
     diff = relativedelta(today, last_output_date)
     return diff.years >= 10
   return False
 
-def __print_new_day_header(some_date: date, age: relativedelta) -> None:
+def __print_new_day_header(some_date: datetime.date, age: relativedelta) -> None:
   formatted_date = __get_formatted_date(some_date)
   print()
   print("─" * 120)
@@ -618,7 +629,7 @@ def __print_new_day_header(some_date: date, age: relativedelta) -> None:
   print(f"\t{formatted_date}")
   print(f"\tAge:  {age.years}")
 
-def __get_formatted_date(some_date: date) -> str:
+def __get_formatted_date(some_date: datetime.date) -> str:
   day = some_date.day
   suffix = 'th' if 11 <= day <= 13 else {1: 'st', 2: 'nd', 3: 'rd'}.get(day % 10, 'th')
   formatted_date = some_date.strftime(f"Date: %A - %B {day}{suffix} %Y")
@@ -631,11 +642,11 @@ def __print_header(header: str) -> None:
   print("=" * 50)
   print(" " * 50)
 
-def __print_summary(today: date, debts: List[Debt], accounts: List[Account], assets: List[Asset]) -> None:
+def __print_summary(today: datetime.date, debts: list[Debt], accounts: list[Account], assets: list[Asset]) -> None:
   __print_header("End of Day Summary")
   # Debts
   print("Debt Balances:")
-  total_debt_balance = 0
+  total_debt_balance = 0.0
   for debt in debts:
     total_debt_balance += debt.get_balance(today)
   print(f"  Total Debts Balance: \033[38;2;255;128;0m${total_debt_balance:,.2f}\033[0m")
@@ -643,7 +654,7 @@ def __print_summary(today: date, debts: List[Debt], accounts: List[Account], ass
     debt.print_balance(today)
   # Accounts
   print("\nAccount Balances:")
-  total_account_balance = 0
+  total_account_balance = 0.0
   for account in accounts:
     total_account_balance += account.get_balance()
   print(f"  Total Accounts Balance: \033[38;2;0;255;0m${total_account_balance:,.2f}\033[0m")
@@ -651,12 +662,12 @@ def __print_summary(today: date, debts: List[Debt], accounts: List[Account], ass
     account.print_balance()
   # Assets
   print("\nAssets:")
-  total_sellable_assets_value = 0
+  total_sellable_assets_value = 0.0
   for asset in assets:
     if asset.is_sellable():
       total_sellable_assets_value += asset.get_post_tax_value()
   print(f"  Total Sellable Assets Value: \033[38;2;91;91;255m${total_sellable_assets_value:,.2f}\033[0m")
-  total_assets_value = 0
+  total_assets_value = 0.0
   for asset in assets:
     total_assets_value += asset.get_post_tax_value()
   print(f"  Total Unconditional Assets Value: \033[38;2;91;91;255m${total_assets_value:,.2f}\033[0m")
@@ -670,62 +681,62 @@ def __print_summary(today: date, debts: List[Debt], accounts: List[Account], ass
   net_worth = total_account_balance + total_assets_value - total_debt_balance
   print(f"\nNet Worth: \033[38;2;0;255;255m${net_worth:,.2f}\033[0m\n")
 
-def __is_income_payment(incomes: List[IncomeStream], today: date) -> bool:
+def __is_income_payment(incomes: list[IncomeStream], today: datetime.date) -> bool:
   for income in incomes:
     if income.is_payment_today(today):
       return True
   return False
 
-def __is_asset_appreciation(assets: List[Asset], today: date) -> bool:
+def __is_asset_appreciation(assets: list[Asset], today: datetime.date) -> bool:
   for asset in assets:
     if asset.appreciates_today(today):
       return True
   return False
 
-def __is_account_interest(accounts: List[Account], today: date) -> bool:
+def __is_account_interest(accounts: list[Account], today: datetime.date) -> bool:
   for account in accounts:
     if account.is_interest_today(today):
       return True
   return False
 
-def __is_capital_gains(accounts: List[Account], today: date) -> bool:
+def __is_capital_gains(accounts: list[Account], today: datetime.date) -> bool:
   for account in accounts:
     if account.is_capital_gains_today(today):
       return True
   return False
 
-def __is_bill_charge(bills: List[Bill], today: date) -> bool:
+def __is_bill_charge(bills: list[Bill], today: datetime.date) -> bool:
   for bill in bills:
     if bill.is_charge_today(today):
       return True
   return False
 
-def __is_bill_charge_increase(bills: List[Bill], today: date) -> bool:
+def __is_bill_charge_increase(bills: list[Bill], today: datetime.date) -> bool:
   for bill in bills:
     if bill.increases_today(today):
       return True
   return False
 
-def __is_income_charge_increase(incomes: List[IncomeStream], today: date) -> bool:
+def __is_income_charge_increase(incomes: list[IncomeStream], today: datetime.date) -> bool:
   for income in incomes:
     if income.increases_today(today):
       return True
   return False
 
-def __is_debt_interest(debts: List[Debt], today: date) -> bool:
+def __is_debt_interest(debts: list[Debt], today: datetime.date) -> bool:
   for debt in debts:
     if debt.is_interest_today(today):
       return True
   return False
 
-def __is_debt_charge(debts: List[Debt], today: date) -> bool:
+def __is_debt_charge(debts: list[Debt], today: datetime.date) -> bool:
   for debt in debts:
     if debt.is_charge_today(today):
       return True
   return False
 
-def __get_total_available_funds(age: relativedelta, accounts: List[Account], assets: List[Asset]) -> float:
-  running_total = 0
+def __get_total_available_funds(age: relativedelta, accounts: list[Account], assets: list[Asset]) -> float:
+  running_total = 0.0
   for account in accounts:
     running_total += account.get_post_tax_balance(age)
   for asset in assets:
@@ -733,7 +744,7 @@ def __get_total_available_funds(age: relativedelta, accounts: List[Account], ass
       running_total += asset.get_post_tax_value()
   return running_total
 
-def __sell_appropriate_assets(money_needed: float, assets: List[Asset], accounts: List[Account]) -> None:
+def __sell_appropriate_assets(money_needed: float, assets: list[Asset], accounts: list[Account]) -> None:
   sorted_assets = sorted(assets, key=lambda a: a.get_appreciation_rate())
   rolling_money_needed = money_needed
   for account in accounts:
@@ -755,7 +766,7 @@ def __handle_tax_day(
   is_married: bool,
   age: relativedelta,
   last_years_annual_federal_tax_income_record: AnnualFederalIncomeTaxRecord,
-  accounts: List[Account]
+  accounts: list[Account]
 ) -> None:
   if is_print_day:
     print("Tax Day:")
@@ -775,11 +786,11 @@ def __handle_tax_day(
     if is_print_day:
       print("  [Tax Day] No Adjustment")
 
-def __shuffle_funds(age: relativedelta, payment_order: List[List], accounts: List[Account]) -> None:
+def __shuffle_funds(age: relativedelta, payment_order: list[list], accounts: list[Account]) -> None:
   __handle_overfilled_accounts(age, payment_order, accounts)
   __handle_underfilled_accounts(age, payment_order, accounts)
 
-def __handle_overfilled_accounts(age: relativedelta, payment_order: List[List], accounts: List[Account]) -> None:
+def __handle_overfilled_accounts(age: relativedelta, payment_order: list[list], accounts: list[Account]) -> None:
   while True:
     overfilled_account, overfill_amount = __get_overfilled_account(payment_order, accounts)
     if not overfilled_account:
@@ -791,7 +802,7 @@ def __handle_overfilled_accounts(age: relativedelta, payment_order: List[List], 
       break
     underfilled_account.deposit(overfilled_account.withdraw(overfill_amount, age))
 
-def __handle_underfilled_accounts(age: relativedelta, payment_order: List[List], accounts: List[Account]) -> None:
+def __handle_underfilled_accounts(age: relativedelta, payment_order: list[list], accounts: list[Account]) -> None:
   while True:
     underfilled_account, amount_missing = __get_underfilled_account(payment_order, accounts)
     if not underfilled_account:
@@ -806,11 +817,11 @@ def __handle_underfilled_accounts(age: relativedelta, payment_order: List[List],
     else:
       underfilled_account.deposit(account_with_spare_funds.withdraw(amount_spare, age))
 
-def __get_overfilled_account(payment_order: List[List], accounts: List[Account]) -> tuple[Account | None, float]:
+def __get_overfilled_account(payment_order: list[list], accounts: list[Account]) -> tuple[Account | None, float]:
   account_type_order = [AccountType.CASH, AccountType.SAVINGS, AccountType.INVESTMENT]
   for current_account_type_order in account_type_order:
     for account in accounts:
-      if not account.get_type() == current_account_type_order:
+      if account.get_type() != current_account_type_order:
         continue
       point_of_overfill = __get_point_of_overfill(payment_order, account)
       if not point_of_overfill:
@@ -820,21 +831,21 @@ def __get_overfilled_account(payment_order: List[List], accounts: List[Account])
         return account, overfill
   return None, 0.0
 
-def __get_underfilled_account(payment_order: List[List], accounts: List[Account]) -> tuple[Account | None, float]:
+def __get_underfilled_account(payment_order: list[list], accounts: list[Account]) -> tuple[Account | None, float]:
   for current in payment_order:
     current_order_account_name: str = current[0]
     point_of_overfill: float | None = current[1]
     if not point_of_overfill:
       continue
     for account in accounts:
-      if not account.get_name().lower() == current_order_account_name.lower():
+      if account.get_name().lower() != current_order_account_name.lower():
         continue
       amount_missing = point_of_overfill - account.get_balance()
       if amount_missing > 1000:
         return account, amount_missing
   return None, 0.0
 
-def __get_first_cash_account(accounts: List[Account]) -> Account:
+def __get_first_cash_account(accounts: list[Account]) -> Account:
   for account in accounts:
     if account.get_type() == AccountType.CASH:
       return account
@@ -842,13 +853,13 @@ def __get_first_cash_account(accounts: List[Account]) -> Account:
 
 def __get_account_with_spare_funds(
   age: relativedelta,
-  payment_order: List[List],
-  accounts: List[Account]
+  payment_order: list[list],
+  accounts: list[Account]
 ) -> tuple[Account | None, float]:
   account_type_order = [AccountType.CASH, AccountType.SAVINGS]
   for current_account_type_order in account_type_order:
     for account in accounts:
-      if not account.get_type() == current_account_type_order:
+      if account.get_type() != current_account_type_order:
         continue
       point_of_overfill = __get_point_of_overfill(payment_order, account)
       if not point_of_overfill:
@@ -858,22 +869,21 @@ def __get_account_with_spare_funds(
         return account, overfill
   return None, 0.0
 
-def __get_point_of_overfill(payment_order: List[List], account: Account) -> float | None:
+def __get_point_of_overfill(payment_order: list[list], account: Account) -> float | None:
   highest_point_of_overfill = 0.0
   for current in payment_order:
     ordered_account_name: str = current[0]
     point_of_overfill: float | None = current[1]
-    if not account.get_name().lower() == ordered_account_name.lower():
+    if account.get_name().lower() != ordered_account_name.lower():
       continue
     if point_of_overfill is None:
       return None
-    if point_of_overfill > highest_point_of_overfill:
-      highest_point_of_overfill = point_of_overfill
+    highest_point_of_overfill = max(highest_point_of_overfill, point_of_overfill)
   if highest_point_of_overfill == 0.0:
     return None
   return highest_point_of_overfill
 
-def __build_accounting_record(accounts: List[Account]) -> AccountingRecord:
+def __build_accounting_record(accounts: list[Account]) -> AccountingRecord:
   user_balances = 0.0
   for account in accounts:
     user_balances += account.get_balance()
@@ -893,7 +903,7 @@ def __build_accounting_record(accounts: List[Account]) -> AccountingRecord:
   accounting_record.user = user_balances
   return accounting_record
 
-def __get_first_account_with_amount(age: relativedelta, accounts: List[Account], amount: float) -> Account:
+def __get_first_account_with_amount(age: relativedelta, accounts: list[Account], amount: float) -> Account:
   for account in accounts:
     if account.get_post_tax_balance(age) > amount:
       return account

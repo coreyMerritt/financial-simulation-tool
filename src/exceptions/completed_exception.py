@@ -1,0 +1,2 @@
+class CompletedException(Exception):
+  pass

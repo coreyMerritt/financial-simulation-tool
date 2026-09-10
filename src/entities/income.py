@@ -1,14 +1,15 @@
 from datetime import date
-from typing import List
+
 from dateutil.relativedelta import relativedelta
+
 from entities.account import Account
 from entities.debt import Debt
 from entities.external_entities.city_government import CityGovernment
 from entities.external_entities.debtor import Debtor
 from entities.external_entities.department_of_social_security import DepartmentOfSocialSecurity
 from entities.external_entities.employer import Employer
-from entities.external_entities.internal_revenue_service import InternalRevenueService
 from entities.external_entities.healthcare_provider import HealthcareProvider
+from entities.external_entities.internal_revenue_service import InternalRevenueService
 from entities.external_entities.state_government import StateGovernment
 from entities.external_entities.us_treasury import UsTreasury
 from entities.misc.annual_federal_income_tax_record import AnnualFederalIncomeTaxRecord
@@ -191,9 +192,9 @@ class IncomeStream:
     is_married: bool,
     today: date,
     annual_federal_income_tax_record: AnnualFederalIncomeTaxRecord,
-    payment_order: List[List],
-    accounts: List[Account],
-    debts: List[Debt]
+    payment_order: list[list],
+    accounts: list[Account],
+    debts: list[Debt]
   ) -> None:
     if today > self._end_date:
       return
@@ -229,10 +230,10 @@ class IncomeStream:
 
   def __pay_accounts(
     self,
-    accounts: List[Account],
+    accounts: list[Account],
     payout: float,
-    payment_order: List[List],
-    debts: List[Debt],
+    payment_order: list[list],
+    debts: list[Debt],
     today: date,
     is_print_day: bool
   ) -> None:
@@ -284,7 +285,7 @@ class IncomeStream:
     is_married: bool,
     today: date,
     annual_federal_income_tax_record: AnnualFederalIncomeTaxRecord,
-    accounts: List[Account]
+    accounts: list[Account]
   ) -> float:
     if self._payment_period_type == TimePeriodType.DAYS:
       payment_period_in_days = self._payment_period_value
@@ -349,7 +350,7 @@ class IncomeStream:
     UsTreasury.give(pay_period_medicare_tax)
     return pay_period_net
 
-  def __deposit_to_first_fourk(self, is_print_day: bool, payout: float, accounts: List[Account]) -> None:
+  def __deposit_to_first_fourk(self, is_print_day: bool, payout: float, accounts: list[Account]) -> None:
     for account in accounts:
       if account.get_type() == AccountType.FOURK:  # We just deposit into the first HSA we find. Can do better
         account.deposit(payout)
@@ -357,7 +358,7 @@ class IncomeStream:
     if is_print_day:
       print(f"  {self._name} 401k Payout: \033[38;2;0;255;0m+${payout:,.2f}\033[0m")
 
-  def __deposit_to_first_hsa(self, is_print_day: bool, payout: float, accounts: List[Account]) -> None:
+  def __deposit_to_first_hsa(self, is_print_day: bool, payout: float, accounts: list[Account]) -> None:
     for account in accounts:
       if account.get_type() == AccountType.HSA:  # We just deposit into the first HSA we find. Can do better
         account.deposit(payout)

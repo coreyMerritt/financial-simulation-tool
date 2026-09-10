@@ -1,5 +1,7 @@
 from datetime import date
+
 from dateutil.relativedelta import relativedelta
+
 from models.configs.asset_config import AssetConfig
 from models.enums.asset_type import AssetType
 from models.enums.time_period_type import TimePeriodType
@@ -49,16 +51,13 @@ class Asset:
     return self._sold
 
   def is_sellable(self) -> bool:
-    if self._is_paid_off:
-      if not self._sold:
-        return True
-    return False
+    return self._is_paid_off and not self._sold
 
   def appreciates_today(self, today: date) -> bool:
     assert not self._sold
     if self._value == 0:
       return False
-    elif self._value < 0:
+    if self._value < 0:
       raise RuntimeError("Asset value is below 0")
     if self._appreciation_period_type == TimePeriodType.DAYS:
       next_appreciation_day = self._last_appreciation_date + relativedelta(days=self._appreciation_period_value)
@@ -74,7 +73,7 @@ class Asset:
 
   def get_post_tax_value(self) -> float:
     assert not self._sold
-    capital_gains_tax = 0
+    capital_gains_tax = 0.0
     if self._pays_capital_gains_tax:
       taxable_gains = self._currently_untaxed_gains
       capital_gains_tax = taxable_gains * 0.15

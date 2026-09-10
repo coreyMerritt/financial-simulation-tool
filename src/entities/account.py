@@ -1,5 +1,7 @@
 from datetime import date
+
 from dateutil.relativedelta import relativedelta
+
 from entities.external_entities.bank import Bank
 from entities.external_entities.internal_revenue_service import InternalRevenueService
 from entities.external_entities.stock_market import StockMarket
@@ -10,15 +12,15 @@ from services.financial_calculator import FinancialCalculator
 
 
 class Account:
-  _account_types_that_gain_interest = [
-    AccountType.SAVINGS
-  ]
-  _account_types_that_accrue_capital_gains = [
+  _account_types_that_gain_interest = (
+    AccountType.SAVINGS,
+  )
+  _account_types_that_accrue_capital_gains = (
     AccountType.FOURK,
     AccountType.HSA,
     AccountType.INVESTMENT,
     AccountType.ROTH_IRA
-  ]
+  )
   _name: str
   _type: AccountType
   _balance: float
@@ -123,9 +125,9 @@ class Account:
     return self._type
 
   def get_post_tax_balance(self, age: relativedelta) -> float:
-    capital_gains_tax = 0
-    income_tax = 0
-    penalty = 0
+    capital_gains_tax = 0.0
+    income_tax = 0.0
+    penalty = 0.0
     account_type = self.get_type()
     if self._pays_capital_gains_tax:
       taxable_gains = self._currently_untaxed_gains
@@ -135,20 +137,24 @@ class Account:
     AGE_IN_MONTHS = age.years * 12 + age.months
     FOURK_AGE_IN_MONTHS = 59 * 12 + 6
     IS_BELOW_FOURK_AGE = AGE_IN_MONTHS < FOURK_AGE_IN_MONTHS
-    if IS_BELOW_FOURK_AGE:
-      if account_type == AccountType.FOURK or account_type == AccountType.ROTH_IRA:
-        penalty = self._balance * 0.1
+    if (
+      IS_BELOW_FOURK_AGE
+      and account_type in (AccountType.FOURK, AccountType.ROTH_IRA)
+    ):
+      penalty = self._balance * 0.1
     HSA_AGE_IN_MONTHS = 65 * 12
     IS_BELOW_HSA_AGE = AGE_IN_MONTHS < HSA_AGE_IN_MONTHS
-    if IS_BELOW_HSA_AGE:
-      if account_type == AccountType.HSA:
-        penalty = self._balance * 0.2
+    if (
+      IS_BELOW_HSA_AGE
+      and account_type == AccountType.HSA
+    ):
+      penalty = self._balance * 0.2
     return self._balance - (capital_gains_tax + income_tax + penalty)
 
   def withdraw(self, asking_amount: float, age: relativedelta) -> float:
-    capital_gains_tax = 0
-    income_tax = 0
-    penalty = 0
+    capital_gains_tax = 0.0
+    income_tax = 0.0
+    penalty = 0.0
     account_type = self.get_type()
     if self._pays_capital_gains_tax:
       taxable_gains = min(asking_amount, self._currently_untaxed_gains)
@@ -158,20 +164,24 @@ class Account:
     AGE_IN_MONTHS = age.years * 12 + age.months
     FOURK_AGE_IN_MONTHS = 59 * 12 + 6
     IS_BELOW_FOURK_AGE = AGE_IN_MONTHS < FOURK_AGE_IN_MONTHS
-    if IS_BELOW_FOURK_AGE:
-      if account_type == AccountType.FOURK or account_type == AccountType.ROTH_IRA:
-        penalty = asking_amount * 0.1
-        input(f"\n\033[38;2;255;0;0mWARNING:\033[0m Withdrawing from \033[38;2;255;0;0m{self.get_name()}\033[0m before age of 59.5")  # pylint: disable=line-too-long
+    if (
+      IS_BELOW_FOURK_AGE
+      and account_type in (AccountType.FOURK, AccountType.ROTH_IRA)
+    ):
+      penalty = asking_amount * 0.1
+      input(f"\n\033[38;2;255;0;0mWARNING:\033[0m Withdrawing from \033[38;2;255;0;0m{self.get_name()}\033[0m before age of 59.5")  # pylint: disable=line-too-long
     HSA_AGE_IN_MONTHS = 65 * 12
     IS_BELOW_HSA_AGE = AGE_IN_MONTHS < HSA_AGE_IN_MONTHS
-    if IS_BELOW_HSA_AGE:
-      if account_type == AccountType.HSA:
-        penalty = asking_amount * 0.2
-        input(f"\n\033[38;2;255;0;0mWARNING:\033[0m Withdrawing from \033[38;2;255;0;0m{self.get_name()}\033[0m before age of 65")  # pylint: disable=line-too-long
+    if (
+      IS_BELOW_HSA_AGE
+      and account_type == AccountType.HSA
+    ):
+      penalty = asking_amount * 0.2
+      input(f"\n\033[38;2;255;0;0mWARNING:\033[0m Withdrawing from \033[38;2;255;0;0m{self.get_name()}\033[0m before age of 65")  # pylint: disable=line-too-long
     assert self._balance >= asking_amount + capital_gains_tax + income_tax + penalty
     self._currently_untaxed_gains -= capital_gains_tax
     assert self._currently_untaxed_gains >= 0
-    amount_to_withdraw_with_tax = (asking_amount + capital_gains_tax + income_tax + penalty)
+    amount_to_withdraw_with_tax = asking_amount + capital_gains_tax + income_tax + penalty
     self._balance -= amount_to_withdraw_with_tax
     InternalRevenueService.give(capital_gains_tax)
     InternalRevenueService.give(income_tax)
@@ -226,13 +236,12 @@ class Account:
     if capital_gains < 0:
       raise RuntimeError(f"Account gained below 0 interest: {capital_gains}")
     self._last_interest_date = today
-    if self._type == AccountType.FOURK:
-      self._balance += StockMarket.take(capital_gains)
-    elif self._type == AccountType.HSA:
-      self._balance += StockMarket.take(capital_gains)
-    elif self._type == AccountType.INVESTMENT:
-      self._balance += StockMarket.take(capital_gains)
-    elif self._type == AccountType.ROTH_IRA:
+    if self._type in (
+      AccountType.FOURK,
+      AccountType.HSA,
+      AccountType.INVESTMENT,
+      AccountType.ROTH_IRA
+    ):
       self._balance += StockMarket.take(capital_gains)
     else:
       raise RuntimeError("Unknown AccountType")
